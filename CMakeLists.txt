@@ -24,10 +24,10 @@ set(Qt6GuiTools_DIR "C:/Qt/${Qt6_Version}/msvc2022_64/lib/cmake/Qt6GuiTools")
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Core Gui)
 
-file(GLOB UI_FILES src/*.ui)
-file(GLOB H_FILES src/*.h)
-file(GLOB CPP_FILES src/*.cpp)
-file(GLOB QRC_FILES src/*.qrc)
+file(GLOB UI_FILES *.ui)
+file(GLOB H_FILES *.h)
+file(GLOB CPP_FILES *.cpp)
+file(GLOB QRC_FILES *.qrc)
 
 set(SOURCE_LIST ${CPP_FILES} ${UI_FILES} ${H_FILES} ${QRC_FILES})
 
