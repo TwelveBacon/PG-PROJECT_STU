@@ -39,6 +39,9 @@ private:
 	bool openImage(QString filename);
 	bool saveImage(QString filename);
 
+	//VTK functions
+	void saveToVTK(QString filename);
+
 private slots:
 	void on_actionOpen_triggered();
 	void on_actionSave_as_triggered();

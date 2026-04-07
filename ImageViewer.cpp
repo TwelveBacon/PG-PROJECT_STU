@@ -350,6 +350,13 @@ bool ImageViewer::saveImage(QString filename)
 	return img->save(filename, extension.toStdString().c_str());
 }
 
+void ImageViewer::saveToVTK(QString filename)
+{
+	QFileInfo fi(filename);
+	QString extension = fi.completeSuffix();
+	return;
+}
+
 //Slots
 void ImageViewer::on_actionOpen_triggered()
 {
