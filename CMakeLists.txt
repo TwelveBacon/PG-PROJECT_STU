@@ -1,5 +1,5 @@
 #Tu nastavit verziu Qt6
-set(Qt6_Version 6.10.1)
+set(Qt6_Version 6.10.2)
 
 cmake_minimum_required(VERSION 3.16)
 

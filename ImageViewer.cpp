@@ -566,6 +566,21 @@ void ImageViewer::on_pushButtonT3_clicked()
 	}
 }
 
+void ImageViewer::on_tbSphere_clicked()
+{
+	
+}
+
+void ImageViewer::on_tbCube_clicked()
+{
+	
+}
+
+void ImageViewer::on_tbSideLen_clicked()
+{
+
+}
+
 void ImageViewer::on_pushButtonSetColor_clicked()
 {
 	QColor newColor = QColorDialog::getColor(globalColor, this);

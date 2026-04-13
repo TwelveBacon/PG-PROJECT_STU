@@ -1,6 +1,9 @@
 #pragma once
 #include <QtWidgets>
 #include <cmath>
+#include <QVector>
+#include <QFile>
+#include <QTextStream>
 
 class ViewerWidget : public QWidget
 {
@@ -193,6 +196,54 @@ private:
 		FillMode mode);
 
 	double triangleArea2(const QPoint& a, const QPoint& b, const QPoint& c) const;
+	
+	// 3D graphics
+	class H_edge; //forward declaration
+	class Vertex {
+	public:
+		double x, y, z;
+		H_edge* edge;
+
+	};
+	class Face {
+	public:
+		H_edge* edge;
+
+	};
+	class H_edge {
+	public:
+		Vertex* vert_origin;
+		Face* face;
+		H_edge* edge_prev, * edge_next;
+		H_edge* pair;
+
+	};
+
+	QVector<H_edge*> half_edges;
+	QVector<Face*> faces;
+	QVector<Vertex*> vertices;
+
+	void clear3Ddata();
+
+	struct TriangleIndices
+	{
+		int v1;
+		int v2;
+		int v3;
+	};
+
+	struct Point3D
+	{
+		double x;
+		double y;
+		double z;
+	};
+
+	void halfEdgeMesh(const QVector<Point3D>& points, const QVector<TriangleIndices>& triangles);
+
+public:
+	void createCube(double side);
+
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
 };

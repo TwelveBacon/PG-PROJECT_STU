@@ -63,6 +63,12 @@ private slots:
 	void on_pushButtonT2_clicked();
 	void on_pushButtonT3_clicked();
 
+
+	// cvik6
+	void on_tbSphere_clicked();
+	void on_tbCube_clicked();
+	void on_tbSideLen_clicked();
+
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
 };

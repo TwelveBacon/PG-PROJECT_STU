@@ -1019,6 +1019,149 @@ double ViewerWidget::triangleArea2(const QPoint& a, const QPoint& b, const QPoin
 		static_cast<double>(b.y() - a.y()) * static_cast<double>(c.x() - a.x());
 }
 
+void ViewerWidget::clear3Ddata()
+{
+	half_edges.clear();
+	faces.clear();
+	vertices.clear();
+}
+
+void ViewerWidget::halfEdgeMesh(const QVector<Point3D>& points, const QVector<TriangleIndices>& triangles)
+{
+	clear3Ddata();
+
+	for (int i = 0; i < points.size(); i++)
+	{
+		Vertex* v = new Vertex;
+		v->x = points[i].x;
+		v->y = points[i].y;
+		v->z = points[i].z;
+		v->edge = nullptr;
+
+		vertices.push_back(v);
+	}
+
+	for (int i = 0; i < triangles.size(); i++)
+	{
+		TriangleIndices t = triangles[i];
+
+		Face* f = new Face;
+		f->edge = nullptr;
+
+		H_edge* h1 = new H_edge;
+		H_edge* h2 = new H_edge;
+		H_edge* h3 = new H_edge;
+
+		h1->vert_origin = vertices[t.v1];
+		h2->vert_origin = vertices[t.v2];
+		h3->vert_origin = vertices[t.v3];
+
+		h1->face = f;
+		h2->face = f;
+		h3->face = f;
+
+		h1->edge_next = h2;
+		h2->edge_next = h3;
+		h3->edge_next = h1;
+
+		h1->edge_prev = h3;
+		h2->edge_prev = h1;
+		h3->edge_prev = h2;
+
+		h1->pair = nullptr;
+		h2->pair = nullptr;
+		h3->pair = nullptr;
+
+		f->edge = h1;
+
+		if (vertices[t.v1]->edge == nullptr)
+			vertices[t.v1]->edge = h1;
+
+		if (vertices[t.v2]->edge == nullptr)
+			vertices[t.v2]->edge = h2;
+
+		if (vertices[t.v3]->edge == nullptr)
+			vertices[t.v3]->edge = h3;
+
+		faces.push_back(f);
+		half_edges.push_back(h1);
+		half_edges.push_back(h2);
+		half_edges.push_back(h3);
+	}
+
+	for (int i = 0; i < half_edges.size(); i++)
+	{
+		H_edge* h1 = half_edges[i];
+
+		Vertex* start1 = h1->vert_origin;
+		Vertex* end1 = h1->edge_next->vert_origin;
+
+		for (int j = 0; j < half_edges.size(); j++)
+		{
+			if (i == j)
+			{
+				continue;
+			}
+
+			H_edge* h2 = half_edges[j];
+
+			Vertex* start2 = h2->vert_origin;
+			Vertex* end2 = h2->edge_next->vert_origin;
+
+			if (start1 == end2 && end1 == start2)
+			{
+				h1->pair = h2;
+				break;
+			}
+		}
+	}
+}
+
+void ViewerWidget::createCube(double side)
+{
+	QVector<Point3D> points;
+	QVector<TriangleIndices> triangles;
+
+	double h = side / 2.0;
+
+	// 8 vertices of cube
+	points.push_back({ -h, -h, -h }); // 0
+	points.push_back({ h, -h, -h }); // 1
+	points.push_back({ h,  h, -h }); // 2
+	points.push_back({ -h,  h, -h }); // 3
+
+	points.push_back({ -h, -h,  h }); // 4
+	points.push_back({ h, -h,  h }); // 5
+	points.push_back({ h,  h,  h }); // 6
+	points.push_back({ -h,  h,  h }); // 7
+
+	// bottom face
+	triangles.push_back({ 0, 2, 1 });
+	triangles.push_back({ 0, 3, 2 });
+
+	// top face
+	triangles.push_back({ 4, 5, 6 });
+	triangles.push_back({ 4, 6, 7 });
+
+	// front face
+	triangles.push_back({ 0, 1, 5 });
+	triangles.push_back({ 0, 5, 4 });
+
+	// back face
+	triangles.push_back({ 3, 6, 2 });
+	triangles.push_back({ 3, 7, 6 });
+
+	// left face
+	triangles.push_back({ 0, 4, 7 });
+	triangles.push_back({ 0, 7, 3 });
+
+	// right face
+	triangles.push_back({ 1, 2, 6 });
+	triangles.push_back({ 1, 6, 5 });
+
+	halfEdgeMesh(points, triangles);
+}
+
 QColor ViewerWidget::getBarycentricColor(const QPoint& p,const QVector<QPoint>& pts,const QColor& c0,const QColor& c1,const QColor& c2) const
 {
 	if (pts.size() != 3) return c0;
