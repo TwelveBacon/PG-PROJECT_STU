@@ -39,8 +39,17 @@ private:
 	bool openImage(QString filename);
 	bool saveImage(QString filename);
 
+	enum ShapeMode {
+		cubeMode,
+		sphereMode,
+		None
+	};
+
+	ShapeMode mode = None;
+
 	//VTK functions
 	void saveToVTK(QString filename);
+	void loadVTK(QString filename);
 
 private slots:
 	void on_actionOpen_triggered();
@@ -67,7 +76,10 @@ private slots:
 	// cvik6
 	void on_tbSphere_clicked();
 	void on_tbCube_clicked();
-	void on_tbSideLen_clicked();
+	void on_pbSideLen_clicked();
+
+	void on_tbSaveVTK_clicked();
+	void on_tbLoadVTK_clicked();
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();

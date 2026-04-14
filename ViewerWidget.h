@@ -243,7 +243,9 @@ private:
 
 public:
 	void createCube(double side);
-
+	void createUVSphere(double radius, unsigned int parallels, unsigned int meridians);
+	bool saveToVTK(const QString& filename);
+	bool loadVTK(const QString& filename);
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
 };

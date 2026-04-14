@@ -1,4 +1,6 @@
 ﻿#include "ImageViewer.h"
+#include <QFileDialog>
+#include <QMessageBox>
 
 ImageViewer::ImageViewer(QWidget* parent)
 	: QMainWindow(parent), ui(new Ui::ImageViewerClass)
@@ -350,11 +352,25 @@ bool ImageViewer::saveImage(QString filename)
 	return img->save(filename, extension.toStdString().c_str());
 }
 
+// ---ChatGPT ---
 void ImageViewer::saveToVTK(QString filename)
 {
-	QFileInfo fi(filename);
-	QString extension = fi.completeSuffix();
-	return;
+	bool ok = vW->saveToVTK(filename);
+
+	if (!ok)
+	{
+		QMessageBox::warning(this, "Error", "File could not be saved.");
+	}
+}
+// ---ChatGPT --- 
+
+void ImageViewer::loadVTK(QString filename)
+{
+	bool ok = vW->loadVTK(filename);
+
+	if (!ok) {
+		QMessageBox::warning(this, "Error", "File could not be opened.");
+	}
 }
 
 //Slots
@@ -568,17 +584,62 @@ void ImageViewer::on_pushButtonT3_clicked()
 
 void ImageViewer::on_tbSphere_clicked()
 {
+	if (ui->tbSphere->isChecked()) {
+		ui->tbCube->setChecked(false);
+		mode = sphereMode;
+	}
 	
 }
 
 void ImageViewer::on_tbCube_clicked()
 {
-	
+	if (ui->tbCube->isChecked()) {
+		ui->tbSphere->setChecked(false);
+		mode = cubeMode;
+	}
 }
 
-void ImageViewer::on_tbSideLen_clicked()
+void ImageViewer::on_pbSideLen_clicked()
 {
+	if (mode != cubeMode)
+	{
+		QMessageBox::warning(this, "Error", "Press Cube first.");
+		return;
+	}
 
+	double side = ui->dsbCubeLen->value();
+
+	if (side <= 0.0)
+	{
+		QMessageBox::warning(this, "Error", "Cube side length must be greater than 0.");
+		return;
+	}
+
+	vW->createCube(side);
+	mode = None;
+}
+
+void ImageViewer::on_tbSaveVTK_clicked()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, "Save VTK file", "","VTK files (*.vtk)");
+
+	if (fileName.isEmpty())
+	{
+		return;
+	}
+
+	saveToVTK(fileName);
+}
+
+void ImageViewer::on_tbLoadVTK_clicked()
+{
+	QString filename = QFileDialog::getOpenFileName(this, "Load VTK File", "", "VTK files (*.vtk)");
+
+	if (filename.isEmpty()) {
+		return;
+	}
+
+	loadVTK(filename);
 }
 
 void ImageViewer::on_pushButtonSetColor_clicked()

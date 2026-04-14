@@ -1,4 +1,5 @@
 #include "ViewerWidget.h"
+#define PI 3.14159265358979323846
 
 namespace
 {
@@ -1161,6 +1162,248 @@ void ViewerWidget::createCube(double side)
 
 	halfEdgeMesh(points, triangles);
 }
+
+void ViewerWidget::createUVSphere(double radius, unsigned int parallels, unsigned int meridians)
+{
+	QVector<Point3D> points;
+	QVector<TriangleIndices> triangles;
+
+
+	// north pole
+	points.push_back({ 0.0, radius, 0.0 });
+
+	// middle rings
+	for (int i = 1; i <= parallels; i++)
+	{
+		double theta = PI * i / (parallels + 1);
+
+		for (int j = 0; j < meridians; j++)
+		{
+			double phi = 2.0 * PI * j / meridians;
+
+			Point3D p;
+			p.x = radius * sin(theta) * cos(phi);
+			p.y = radius * cos(theta);
+			p.z = radius * sin(theta) * sin(phi);
+
+			points.push_back(p);
+		}
+	}
+
+	// south pole
+	points.push_back({ 0.0, -radius, 0.0 });
+
+	int northPole = 0;
+	int southPole = points.size() - 1;
+
+	// top fan
+	for (int j = 0; j < meridians; j++)
+	{
+		int nextJ = (j + 1) % meridians;
+
+		int a = 1 + j;
+		int b = 1 + nextJ;
+
+		triangles.push_back({ northPole, b, a });
+	}
+
+	// middle strips
+	for (int i = 0; i < parallels - 1; i++)
+	{
+		int ringStart1 = 1 + i * meridians;
+		int ringStart2 = 1 + (i + 1) * meridians;
+
+		for (int j = 0; j < meridians; j++)
+		{
+			int nextJ = (j + 1) % meridians;
+
+			int a = ringStart1 + j;
+			int b = ringStart1 + nextJ;
+			int c = ringStart2 + j;
+			int d = ringStart2 + nextJ;
+
+			triangles.push_back({ a, b, c });
+			triangles.push_back({ b, d, c });
+		}
+	}
+
+	// bottom fan
+	int lastRingStart = 1 + (parallels - 1) * meridians;
+
+	for (int j = 0; j < meridians; j++)
+	{
+		int nextJ = (j + 1) % meridians;
+
+		int a = lastRingStart + j;
+		int b = lastRingStart + nextJ;
+
+		triangles.push_back({ a, b, southPole });
+	}
+
+	halfEdgeMesh(points, triangles);
+
+}
+
+// --- ChatGPT ---
+bool ViewerWidget::saveToVTK(const QString& filename)
+{
+	QFile file(filename);
+
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		return false;
+	}
+
+	QTextStream out(&file);
+
+	out << "# vtk DataFile Version 3.0\n";
+	out << "vtk output\n";
+	out << "ASCII\n";
+	out << "DATASET POLYDATA\n";
+
+	// POINTS
+	out << "POINTS " << vertices.size() << " float\n";
+
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		out << vertices[i]->x << " "
+			<< vertices[i]->y << " "
+			<< vertices[i]->z << "\n";
+	}
+
+	// POLYGONS
+	out << "POLYGONS " << faces.size() << " " << faces.size() * 4 << "\n";
+
+	for (int i = 0; i < faces.size(); i++)
+	{
+		H_edge* h1 = faces[i]->edge;
+		H_edge* h2 = h1->edge_next;
+		H_edge* h3 = h2->edge_next;
+
+		int index1 = vertices.indexOf(h1->vert_origin);
+		int index2 = vertices.indexOf(h2->vert_origin);
+		int index3 = vertices.indexOf(h3->vert_origin);
+
+		out << "3 " << index1 << " " << index2 << " " << index3 << "\n";
+	}
+
+	file.close();
+	return true;
+}
+bool ViewerWidget::loadVTK(const QString& fileName)
+{
+	QFile file(fileName);
+
+	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		return false;
+	}
+
+	QTextStream in(&file);
+
+	QVector<Point3D> points;
+	QVector<TriangleIndices> triangles;
+
+	while (!in.atEnd())
+	{
+		QString line = in.readLine().trimmed();
+
+		if (line.startsWith("POINTS"))
+		{
+			QStringList parts = line.split(" ", Qt::SkipEmptyParts);
+
+			if (parts.size() < 3)
+			{
+				file.close();
+				return false;
+			}
+
+			int pointCount = parts[1].toInt();
+
+			for (int i = 0; i < pointCount; i++)
+			{
+				if (in.atEnd())
+				{
+					file.close();
+					return false;
+				}
+
+				QString pointLine = in.readLine().trimmed();
+				QStringList pointParts = pointLine.split(" ", Qt::SkipEmptyParts);
+
+				if (pointParts.size() < 3)
+				{
+					file.close();
+					return false;
+				}
+
+				Point3D p;
+				p.x = pointParts[0].toDouble();
+				p.y = pointParts[1].toDouble();
+				p.z = pointParts[2].toDouble();
+
+				points.push_back(p);
+			}
+		}
+
+		if (line.startsWith("POLYGONS"))
+		{
+			QStringList parts = line.split(" ", Qt::SkipEmptyParts);
+
+			if (parts.size() < 3)
+			{
+				file.close();
+				return false;
+			}
+
+			int polygonCount = parts[1].toInt();
+
+			for (int i = 0; i < polygonCount; i++)
+			{
+				if (in.atEnd())
+				{
+					file.close();
+					return false;
+				}
+
+				QString polygonLine = in.readLine().trimmed();
+				QStringList polygonParts = polygonLine.split(" ", Qt::SkipEmptyParts);
+
+				if (polygonParts.size() < 4)
+				{
+					file.close();
+					return false;
+				}
+
+				int vertexCount = polygonParts[0].toInt();
+
+				if (vertexCount != 3)
+				{
+					file.close();
+					return false;
+				}
+
+				TriangleIndices t;
+				t.v1 = polygonParts[1].toInt();
+				t.v2 = polygonParts[2].toInt();
+				t.v3 = polygonParts[3].toInt();
+
+				triangles.push_back(t);
+			}
+		}
+	}
+
+	file.close();
+
+	if (points.isEmpty() || triangles.isEmpty())
+	{
+		return false;
+	}
+
+	halfEdgeMesh(points, triangles);
+	return true;
+}
+// --- ChatGPT ---
 
 QColor ViewerWidget::getBarycentricColor(const QPoint& p,const QVector<QPoint>& pts,const QColor& c0,const QColor& c1,const QColor& c2) const
 {
